@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>시간표 보기</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; background: #f5f5f5; }
+    table { border-collapse: collapse; margin: 30px auto; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    th, td { border: 1px solid #ccc; padding: 12px 20px; min-width: 80px; text-align: center; }
+    th { background: #0078ff; color: white; }
+    td { height: 60px; vertical-align: middle; }
+    caption { margin-bottom: 10px; font-size: 1.4em; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>3학년 2반 주간 시간표</h2>
+  <table id="timetable">
+    <caption>시간표</caption>
+    <thead>
+      <tr>
+        <th>교시</th>
+        <th>월</th>
+        <th>화</th>
+        <th>수</th>
+        <th>목</th>
+        <th>금</th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+      <!-- JS로 자동 채워짐 -->
+    </tbody>
+  </table>
+
+  <script>
+    const KEY = "여기에_인증키_입력"; // NEIS API 인증키
+    const ATPT_OFCDC_SC_CODE = "J10"; // 예: 전남
+    const SD_SCHUL_CODE = "7530082";  // 예: 광주 모 중학교
+    const GRADE = "3";
+    const CLASS_NM = "2";
+    const API_URL = `https://open.neis.go.kr/hub/hisTimetable?KEY=${KEY}&Type=json&pIndex=1&pSize=100&ATPT_OFCDC_SC_CODE=${ATPT_OFCDC_SC_CODE}&SD_SCHUL_CODE=${SD_SCHUL_CODE}&GRADE=${GRADE}&CLASS_NM=${CLASS_NM}`;
+
+    // 요일별로 시간표 담을 배열
+    const days = ["월", "화", "수", "목", "금"];
+    const timetable = {};
+    days.forEach(d => timetable[d] = Array(7).fill(""));
+
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(data => {
+        const rows = data.hisTimetable?.[1]?.row || [];
+        rows.forEach(r => {
+          const date = r.ALL_TI_YMD;
+          const period = parseInt(r.PERIO);
+          const subject = r.ITRT_CNTNT;
+          const dayOfWeek = new Date(date).getDay(); // 1~5
+          if (dayOfWeek >= 1 && dayOfWeek <= 5 && period <= 7) {
+            const dayName = days[dayOfWeek - 1];
+            timetable[dayName][period - 1] = subject;
+          }
+        });
+
+        const tbody = document.getElementById("tbody");
+        for (let i = 0; i < 7; i++) {
+          const tr = document.createElement("tr");
+          const th = document.createElement("th");
+          th.textContent = `${i + 1}교시`;
+          tr.appendChild(th);
+
+          days.forEach(d => {
+            const td = document.createElement("td");
+            td.textContent = timetable[d][i] || "-";
+            tr.appendChild(td);
+          });
+
+          tbody.appendChild(tr);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert("시간표를 불러오는 중 오류가 발생했습니다.");
+      });
+  </script>
+</body>
+</html>
