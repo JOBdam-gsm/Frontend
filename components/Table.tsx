@@ -2,7 +2,11 @@
 import { useEffect, useState } from 'react';
 import { Axios } from 'axios';
 
-export default function Table() {
+type TableProps = {
+  onCellClick?: (day: string, period: string) => void
+}
+
+export default function Table({ onCellClick }: TableProps) {
   const today = new Date();
   const today4 = new Date();
   const days = ['월', '화', '수', '목', '금'];
@@ -18,21 +22,21 @@ export default function Table() {
         const SD_SCHUL_CODE = "7380292";
         const GRADE = "1";
         const CLASS_NM = "1";
-          const AY = today.getFullYear().toString();
-          const month = (today.getMonth() + 1).toString().padStart(2, "0");
-          const day = today.getDate().toString().padStart(2, "0");
+        const AY = today.getFullYear().toString();
+        const month = (today.getMonth() + 1).toString().padStart(2, "0");
+        const day = today.getDate().toString().padStart(2, "0");
         const TI_FROM_YMD = `${AY}${month}${day}`;
-        today4.setDate(today4.getDate()+4);
-          const month4 = (today4.getMonth()+1).toString().padStart(2, "0");
-          const day4 = today4.getDate().toString().padStart(2,"0");
+        today4.setDate(today4.getDate() + 4);
+        const month4 = (today4.getMonth() + 1).toString().padStart(2, "0");
+        const day4 = today4.getDate().toString().padStart(2, "0");
         const TI_TO_YMD = `${today4.getFullYear()}${month4}${day4}`;
-        
+
         const API_URL = `https://open.neis.go.kr/hub/hisTimetable?KEY=${KEY}&Type=json&pIndex=1&pSize=100&ATPT_OFCDC_SC_CODE=${ATPT_OFCDC_SC_CODE}&SD_SCHUL_CODE=${SD_SCHUL_CODE}&GRADE=${GRADE}&CLASS_NM=${CLASS_NM}&AY=${AY}&TI_FROM_YMD=${TI_FROM_YMD}&TI_TO_YMD=${TI_TO_YMD}`;
-        
+        console.log("API URL:", API_URL);
         console.log("API 호출 시작");
 
         const res: any = await axios.get(API_URL);
-        const data = typeof res.data === "string" ? JSON.parse(res.data) : res.data;
+        const data = typeof res.data === "string" ? JSON.parse(res.data) : res.data; //과목 안 뜨는 오류 고쳐준 코드
         console.log("API 응답 데이터:", data);
 
         const rows = data?.hisTimetable?.[1]?.row || [];
@@ -67,25 +71,20 @@ export default function Table() {
       <table>
         <thead>
           <tr>
-            <th style={{ border: "1px solid #ccc", padding: "12px" }}>교시</th>
+            <th className="border border-gray-300 p-3">교시</th>
             {days.map((day) => (
-              <th key={day} style={{ border: "1px solid #ccc", padding: "12px" }}>{day}요일</th>
+              <th key={day} className="border border-gray-300 p-3">{day}요일</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {periods.map((period, idx) => (
             <tr key={period}>
-              <th style={{ border: "1px solid #ccc", padding: "12px" }}>
+              <th className="border border-gray-300 p-3">
                 {period}교시
               </th>
               {days.map((day) => (
-                <td key={day + period} style={{
-                  border: "1px solid #ccc",
-                  padding: "20px",
-                  minWidth: "80px",
-                  textAlign: "center",
-                }}>
+                <td key={day + period} onClick={() => onCellClick?.(day, period)} className="border border-gray-300 p-5 min-w-[80px] text-center hover:bg-gray-100 cursor-pointer transition">
                   {timetable[day]?.[idx] || ""}
                 </td>
               ))}
